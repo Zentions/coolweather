@@ -12,11 +12,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        SharedPreferences pre = PreferenceManager.getDefaultSharedPreferences(this);
-        if(pre.getString("weather", null)!=null){
-            Intent intent = new Intent(this,WeatherActivity.class);
-            startActivity(intent);
-            finish();
-        }
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
+        editor.putString("weather", null);
+        editor.apply();
     }
 }

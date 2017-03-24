@@ -1,7 +1,10 @@
 package com.example.coolweather;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
@@ -22,6 +25,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.coolweather.gson.Forecast;
 import com.example.coolweather.gson.Weather;
+import com.example.coolweather.service.AutoUpdateService;
 import com.example.coolweather.util.HttpUtil;
 import com.example.coolweather.util.Utility;
 
@@ -39,6 +43,7 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView titleUpdateTime;
     private TextView degreeText;
     private TextView weatherInforText;
+    private TextView windInforText;
     private LinearLayout forecastLayout;
     private TextView aqiText;
     private TextView pm25Text;
@@ -63,6 +68,7 @@ public class WeatherActivity extends AppCompatActivity {
         titleUpdateTime = (TextView)findViewById(R.id.title_time);
         degreeText = (TextView)findViewById(R.id.degree_text);
         weatherInforText = (TextView)findViewById(R.id.weather_info_text);
+        windInforText = (TextView)findViewById(R.id.wind_info_text);
         forecastLayout = (LinearLayout)findViewById(R.id.forecast_layout);
         aqiText = (TextView)findViewById(R.id.aqi_text);
         pm25Text = (TextView)findViewById(R.id.pm25_text);
@@ -74,7 +80,7 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh.setColorSchemeColors(R.color.colorPrimary);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
         home = (Button)findViewById(R.id.home);
-        SharedPreferences pre = PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences pre = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = pre.getString("weather", null);
         final String id;
         if(weatherString!=null){
@@ -89,7 +95,7 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                requestWeather(id);
+                requestWeather(Utility.handleWeatherResponse(pre.getString("weather", null)).basic.weatherId);
             }
         });
         String pic_Uri = pre.getString("pic_img",null);
@@ -130,6 +136,7 @@ public class WeatherActivity extends AppCompatActivity {
                          if (weather != null && "ok".equals(weather.status)) {
                              SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
                              editor.putString("weather", ResponseText);
+                             editor.apply();
                              showWeather(weather);
                          } else {
                              Toast.makeText(WeatherActivity.this, "111加载失败", Toast.LENGTH_SHORT).show();
@@ -149,6 +156,7 @@ public class WeatherActivity extends AppCompatActivity {
         titleUpdateTime.setText(updateTime);
         degreeText.setText(degree);
         weatherInforText.setText(weatherInfo);
+        windInforText.setText(weather.now.wind.dir+weather.now.wind.sc+"级");
         forecastLayout.removeAllViews();
         for(Forecast forecast:weather.forecastList){
             View view = LayoutInflater.from(this).inflate(R.layout.forecast_item,forecastLayout,false);
@@ -159,8 +167,8 @@ public class WeatherActivity extends AppCompatActivity {
             Log.d("gao",forecast.date);
             dataText.setText(forecast.date);
             infoText.setText(forecast.more.info);
-            maxText.setText(forecast.temperature.max);
-            minText.setText(forecast.temperature.min);
+            maxText.setText(forecast.temperature.max+"°C");
+            minText.setText(forecast.temperature.min+"°C");
             forecastLayout.addView(view);
         }
         if(weather.aqi !=null){
@@ -170,8 +178,10 @@ public class WeatherActivity extends AppCompatActivity {
         }
         comfortText.setText("舒适度："+weather.suggestion.comfort.info);
         carWashText.setText("洗车指数："+weather.suggestion.carWash.info);
-        sportText.setText("运动建议："+weather.suggestion.sport.info);
+        sportText.setText("运动建议：" + weather.suggestion.sport.info);
         weatherLayout.setVisibility(View.VISIBLE);
+        Intent intent = new Intent(this, AutoUpdateService.class);
+        startService(intent);
     }
     private void loadPic_img(){
         String requestUri = "http://guolin.tech/api/bing_pic";
@@ -190,7 +200,9 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        pic_img.setAlpha(0.5f);
                         Glide.with(WeatherActivity.this).load(uri).into(pic_img);
+                        pic_img.setColorFilter(Color.RED, PorterDuff.Mode.DARKEN);
                     }
                 });
             }

@@ -14,4 +14,9 @@ public class Now {
         @SerializedName("txt")
         public String info;
     }
+    public Wind wind;
+    public class Wind{
+        public String dir;
+        public String sc;
+    }
 }

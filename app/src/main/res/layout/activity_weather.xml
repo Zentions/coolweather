@@ -10,6 +10,11 @@
         android:src="@drawable/back"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+    <ImageView
+        android:scaleType="centerCrop"
+        android:background="#88ffffff"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/drawer"
         android:layout_width="match_parent"
