@@ -1,5 +1,6 @@
 package com.example.coolweather;
 
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -10,10 +11,14 @@ import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -53,7 +58,6 @@ public class WeatherActivity extends AppCompatActivity {
     private ImageView pic_img;
     public SwipeRefreshLayout swipeRefresh;
     public DrawerLayout drawerLayout;
-    private Button home;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +67,13 @@ public class WeatherActivity extends AppCompatActivity {
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
         setContentView(R.layout.activity_weather);
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null){
+            actionBar.setDisplayHomeAsUpEnabled(true);
+          // actionBar.setHomeAsUpIndicator(R.drawable.home);
+        }
         weatherLayout = (ScrollView)findViewById(R.id.weather_layout);
         titleCity = (TextView)findViewById(R.id.title_city);
         titleUpdateTime = (TextView)findViewById(R.id.title_time);
@@ -79,7 +90,6 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh = (SwipeRefreshLayout)findViewById(R.id.swip_refresh);
         swipeRefresh.setColorSchemeColors(R.color.colorPrimary);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
-        home = (Button)findViewById(R.id.home);
         final SharedPreferences pre = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = pre.getString("weather", null);
         final String id;
@@ -104,13 +114,28 @@ public class WeatherActivity extends AppCompatActivity {
         }else{
             loadPic_img();
         }
-        home.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.openDrawer(GravityCompat.START);
-            }
-        });
+
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                drawerLayout.openDrawer(GravityCompat.START);
+                break;
+            case R.id.tianjia:
+                break;
+            default: break;
+        }
+        return true;
+    }
+
     public void requestWeather(final String id){
         String Uri = "https://free-api.heweather.com/v5/weather?city="+id+"&key=71eb49fa81c34ae18c67b54189e3d6b8";
         HttpUtil.sendHttpRequest(Uri, new Callback() {
@@ -149,7 +174,7 @@ public class WeatherActivity extends AppCompatActivity {
     }
     private void showWeather(Weather weather){
         String cityName = weather.basic.cityName;
-        String updateTime = weather.basic.update.updateTime.split(" ")[1];
+        String updateTime ="更新时间："+ weather.basic.update.updateTime.split(" ")[1];
         String degree = weather.now.temperature+"°C";
         String weatherInfo = weather.now.more.info;
         titleCity.setText(cityName);
